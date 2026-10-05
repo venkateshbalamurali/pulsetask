@@ -3,219 +3,181 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PulseTask - AI Project & Task Workspace</title>
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- React & React DOM -->
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-
+  <title>PulseTask Workspace</title>
   <style>
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    .dark ::-webkit-scrollbar-thumb { background: #475569; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #0f172a; color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; }
+    header { background-color: #1e293b; border-bottom: 1px solid #334155; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+    .logo-container { display: flex; align-items: center; gap: 0.75rem; }
+    .logo { width: 36px; height: 36px; background: linear-gradient(to top right, #4f46e5, #8b5cf6); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1.25rem; color: #fff; }
+    .title h1 { font-size: 1.125rem; font-weight: 700; }
+    .title p { font-size: 0.75rem; color: #94a3b8; }
+    .nav-bar { background-color: #1e293b; border-bottom: 1px solid #334155; padding: 0 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; overflow-x: auto; }
+    .tabs { display: flex; }
+    .tab-btn { background: none; border: none; color: #94a3b8; padding: 0.75rem 1rem; font-size: 0.875rem; font-weight: 500; cursor: pointer; border-bottom: 2px solid transparent; text-transform: capitalize; }
+    .tab-btn.active { color: #6366f1; border-bottom-color: #6366f1; font-weight: 600; }
+    .add-form { display: flex; gap: 0.5rem; padding: 0.5rem 0; }
+    .add-form input { background-color: #0f172a; border: 1px solid #334155; color: #fff; padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.875rem; outline: none; }
+    .add-form button { background-color: #4f46e5; color: #fff; border: none; padding: 0.375rem 0.75rem; border-radius: 6px; font-size: 0.875rem; font-weight: 500; cursor: pointer; }
+    .main-content { padding: 1.5rem; flex: 1; }
+    .kanban-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; }
+    .kanban-col { background-color: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+    .col-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.875rem; font-weight: 600; }
+    .badge { padding: 0.125rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; }
+    .badge-todo { background-color: #334155; color: #e2e8f0; }
+    .badge-inprogress { background-color: #1e3a8a; color: #93c5fd; }
+    .badge-stuck { background-color: #7f1d1d; color: #fca5a5; }
+    .badge-done { background-color: #064e3b; color: #6ee7b7; }
+    .task-card { background-color: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 0.875rem; display: flex; flex-direction: column; gap: 0.5rem; }
+    .task-title { font-size: 0.875rem; font-weight: 500; }
+    .task-meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: #94a3b8; }
+    .status-select { background-color: #1e293b; border: 1px solid #334155; color: #cbd5e1; padding: 0.25rem; border-radius: 4px; font-size: 0.75rem; width: 100%; outline: none; }
+    .delete-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.75rem; float: right; }
+    table { width: 100%; border-collapse: collapse; background-color: #1e293b; border: 1px solid #334155; border-radius: 8px; overflow: hidden; text-align: left; font-size: 0.875rem; }
+    th, td { padding: 0.75rem 1rem; border-bottom: 1px solid #334155; }
+    th { background-color: #0f172a; color: #94a3b8; }
   </style>
 </head>
-<body class="bg-slate-900 text-slate-100 font-sans antialiased min-h-screen">
-  <div id="root"></div>
+<body>
+
+  <header>
+    <div class="logo-container">
+      <div class="logo">P</div>
+      <div class="title">
+        <h1>PulseTask Workspace</h1>
+        <p>Project & Task Management</p>
+      </div>
+    </div>
+  </header>
+
+  <div class="nav-bar">
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchView('kanban')">Kanban Board</button>
+      <button class="tab-btn" onclick="switchView('list')">List Table</button>
+    </div>
+    <form class="add-form" onsubmit="handleAddTask(event)">
+      <input type="text" id="newTaskInput" placeholder="New task title..." required />
+      <button type="submit">+ Add Task</button>
+    </form>
+  </div>
+
+  <main class="main-content" id="appRoot"></main>
 
   <script>
-    const { useState, useEffect, useMemo, createElement: h } = React;
-
-    const INITIAL_TASKS = [
-      { id: '1', title: 'Design Landing Page Wireframes', status: 'In Progress', priority: 'High', assignee: 'Alex', dueDate: '2026-10-10', progress: 60, tag: 'Design' },
-      { id: '2', title: 'Setup Firebase Firestore Schema', status: 'Done', priority: 'Critical', assignee: 'Sam', dueDate: '2026-10-04', progress: 100, tag: 'Backend' },
-      { id: '3', title: 'Integrate Gantt Chart View', status: 'To Do', priority: 'Medium', assignee: 'Jordan', dueDate: '2026-10-18', progress: 0, tag: 'Frontend' },
-      { id: '4', title: 'Prepare User Onboarding Tour', status: 'Stuck', priority: 'Low', assignee: 'Taylor', dueDate: '2026-10-12', progress: 20, tag: 'Marketing' }
+    let tasks = JSON.parse(localStorage.getItem('pulsetask_vanilla')) || [
+      { id: '1', title: 'Design Landing Page Wireframes', status: 'In Progress', tag: 'Design', dueDate: '2026-10-10' },
+      { id: '2', title: 'Setup Database Schema', status: 'Done', tag: 'Backend', dueDate: '2026-10-04' },
+      { id: '3', title: 'Integrate Gantt View', status: 'To Do', tag: 'Frontend', dueDate: '2026-10-18' },
+      { id: '4', title: 'User Onboarding Flow', status: 'Stuck', tag: 'Marketing', dueDate: '2026-10-12' }
     ];
 
-    const STATUSES = [
-      { name: 'To Do', color: 'bg-gray-100 text-gray-700 border-gray-300' },
-      { name: 'In Progress', color: 'bg-blue-100 text-blue-700 border-blue-300' },
-      { name: 'Stuck', color: 'bg-red-100 text-red-700 border-red-300' },
-      { name: 'Done', color: 'bg-emerald-100 text-emerald-700 border-emerald-300' }
-    ];
+    let currentView = 'kanban';
 
-    const App = () => {
-      const [tasks, setTasks] = useState(() => {
-        const saved = localStorage.getItem('pulsetask_tasks');
-        return saved ? JSON.parse(saved) : INITIAL_TASKS;
+    function saveTasks() {
+      localStorage.setItem('pulsetask_vanilla', JSON.stringify(tasks));
+      render();
+    }
+
+    function switchView(view) {
+      currentView = view;
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText.toLowerCase().includes(view));
       });
-      const [view, setView] = useState('kanban');
-      const [searchQuery, setSearchQuery] = useState('');
-      const [isDarkMode, setIsDarkMode] = useState(true);
-      const [newTaskTitle, setNewTaskTitle] = useState('');
+      render();
+    }
 
-      useEffect(() => {
-        localStorage.setItem('pulsetask_tasks', JSON.stringify(tasks));
-      }, [tasks]);
+    function handleAddTask(e) {
+      e.preventDefault();
+      const input = document.getElementById('newTaskInput');
+      if (!input.value.trim()) return;
+      tasks.unshift({
+        id: Date.now().toString(),
+        title: input.value.trim(),
+        status: 'To Do',
+        tag: 'General',
+        dueDate: new Date().toISOString().split('T')[0]
+      });
+      input.value = '';
+      saveTasks();
+    }
 
-      const filteredTasks = useMemo(() => {
-        return tasks.filter(t => 
-          t.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-          t.tag.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }, [tasks, searchQuery]);
+    function updateStatus(id, newStatus) {
+      tasks = tasks.map(t => t.id === id ? { ...t, status: newStatus } : t);
+      saveTasks();
+    }
 
-      const handleAddTask = (e) => {
-        e.preventDefault();
-        if (!newTaskTitle.trim()) return;
-        const newTask = {
-          id: Date.now().toString(),
-          title: newTaskTitle,
-          status: 'To Do',
-          priority: 'Medium',
-          assignee: 'Venkatesh',
-          dueDate: new Date().toISOString().split('T')[0],
-          progress: 0,
-          tag: 'General'
-        };
-        setTasks([newTask, ...tasks]);
-        setNewTaskTitle('');
-      };
+    function deleteTask(id) {
+      tasks = tasks.filter(t => t.id !== id);
+      saveTasks();
+    }
 
-      const updateTaskStatus = (id, newStatus) => {
-        setTasks(tasks.map(t => t.id === id ? { ...t, status: newStatus, progress: newStatus === 'Done' ? 100 : t.progress } : t));
-      };
+    function render() {
+      const root = document.getElementById('appRoot');
+      if (currentView === 'kanban') {
+        const statuses = [
+          { name: 'To Do', class: 'badge-todo' },
+          { name: 'In Progress', class: 'badge-inprogress' },
+          { name: 'Stuck', class: 'badge-stuck' },
+          { name: 'Done', class: 'badge-done' }
+        ];
 
-      const deleteTask = (id) => {
-        setTasks(tasks.filter(t => t.id !== id));
-      };
+        root.innerHTML = `<div class="kanban-grid">
+          ${statuses.map(s => {
+            const colTasks = tasks.filter(t => t.status === s.name);
+            return `
+              <div class="kanban-col">
+                <div class="col-header">
+                  <span class="badge ${s.class}">${s.name}</span>
+                  <span style="font-size: 0.75rem; color: #94a3b8;">${colTasks.length}</span>
+                </div>
+                ${colTasks.map(t => `
+                  <div class="task-card">
+                    <div style="display:flex; justify-content:space-between; align-items:start;">
+                      <div class="task-title">${t.title}</div>
+                      <button class="delete-btn" onclick="deleteTask('${t.id}')">✕</button>
+                    </div>
+                    <div class="task-meta">
+                      <span>${t.tag}</span>
+                      <span>${t.dueDate}</span>
+                    </div>
+                    <select class="status-select" onchange="updateStatus('${t.id}', this.value)">
+                      ${statuses.map(st => `<option value="${st.name}" ${st.name === t.status ? 'selected' : ''}>${st.name}</option>`).join('')}
+                    </select>
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }).join('')}
+        </div>`;
+      } else {
+        root.innerHTML = `
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Tag</th>
+                <th>Due Date</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tasks.map(t => `
+                <tr>
+                  <td>${t.title}</td>
+                  <td>${t.status}</td>
+                  <td>${t.tag}</td>
+                  <td>${t.dueDate}</td>
+                  <td><button class="delete-btn" onclick="deleteTask('${t.id}')">Delete</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
 
-      return h('div', { className: `min-h-screen flex flex-col ${isDarkMode ? 'bg-slate-900 text-slate-100' : 'bg-gray-50 text-gray-900'}` },
-        // Header
-        h('header', { className: `px-6 py-4 border-b flex flex-wrap items-center justify-between gap-4 ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-gray-200 bg-white'}` },
-          h('div', { className: 'flex items-center gap-3' },
-            h('div', { className: 'w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center text-white font-bold text-xl shadow-md' }, 'P'),
-            h('div', null,
-              h('h1', { className: 'text-xl font-bold tracking-tight' }, 'PulseTask Workspace'),
-              h('p', { className: 'text-xs text-gray-500 dark:text-slate-400' }, 'Project & Task Management')
-            )
-          ),
-          h('div', { className: 'flex items-center gap-3' },
-            h('input', {
-              type: 'text',
-              placeholder: 'Search tasks...',
-              value: searchQuery,
-              onChange: (e) => setSearchQuery(e.target.value),
-              className: `px-3 py-1.5 text-sm rounded-lg border focus:outline-none ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-gray-50 border-gray-200'}`
-            }),
-            h('button', {
-              onClick: () => setIsDarkMode(!isDarkMode),
-              className: `px-3 py-1.5 text-xs rounded-lg border ${isDarkMode ? 'border-slate-700 bg-slate-800 text-yellow-400' : 'border-gray-200 bg-white text-gray-600'}`
-            }, isDarkMode ? '☀️ Light' : '🌙 Dark')
-          )
-        ),
-
-        // Navigation Tabs & Add Task Form
-        h('div', { className: `px-6 border-b flex items-center justify-between gap-4 overflow-x-auto ${isDarkMode ? 'border-slate-800 bg-slate-900' : 'border-gray-200 bg-white'}` },
-          h('div', { className: 'flex space-x-1' },
-            ['kanban', 'list', 'gantt', 'calendar'].map(t => 
-              h('button', {
-                key: t,
-                onClick: () => setView(t),
-                className: `px-4 py-3 text-sm font-medium border-b-2 capitalize transition-colors ${view === t ? 'border-indigo-600 text-indigo-600 font-semibold' : 'border-transparent text-gray-500'}`
-              }, t === 'gantt' ? 'Gantt Chart' : t)
-            )
-          ),
-          h('form', { onSubmit: handleAddTask, className: 'flex items-center gap-2 py-2' },
-            h('input', {
-              type: 'text',
-              placeholder: 'Add new task...',
-              value: newTaskTitle,
-              onChange: (e) => setNewTaskTitle(e.target.value),
-              className: `px-3 py-1 text-sm rounded border ${isDarkMode ? 'bg-slate-800 border-slate-700 text-white' : 'bg-white border-gray-200'}`
-            }),
-            h('button', { type: 'submit', className: 'bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1 rounded' }, '+ Add')
-          )
-        ),
-
-        // Main View Render
-        h('main', { className: 'flex-1 p-6 overflow-auto' },
-          view === 'kanban' && h('div', { className: 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6' },
-            STATUSES.map(s => {
-              const statusTasks = filteredTasks.filter(t => t.status === s.name);
-              return h('div', { key: s.name, className: `p-4 rounded-xl border flex flex-col gap-3 ${isDarkMode ? 'bg-slate-800/50 border-slate-700' : 'bg-gray-100/70 border-gray-200'}` },
-                h('div', { className: 'flex items-center justify-between font-semibold' },
-                  h('span', { className: `px-2.5 py-0.5 rounded-full text-xs font-semibold ${s.color}` }, s.name),
-                  h('span', { className: 'text-xs text-gray-400' }, `${statusTasks.length} tasks`)
-                ),
-                h('div', { className: 'flex flex-col gap-3 min-h-[200px]' },
-                  statusTasks.map(t => h('div', { key: t.id, className: `p-4 rounded-lg border shadow-sm flex flex-col gap-3 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}` },
-                    h('div', { className: 'flex justify-between items-start' },
-                      h('h3', { className: 'font-medium text-sm' }, t.title),
-                      h('button', { onClick: () => deleteTask(t.id), className: 'text-gray-400 hover:text-red-500 text-xs' }, '✕')
-                    ),
-                    h('div', { className: 'flex items-center justify-between text-xs text-gray-400' },
-                      h('span', { className: 'px-2 py-0.5 bg-indigo-950/50 text-indigo-400 rounded' }, t.tag),
-                      h('span', null, t.dueDate)
-                    ),
-                    h('select', {
-                      value: t.status,
-                      onChange: (e) => updateTaskStatus(t.id, e.target.value),
-                      className: `text-xs p-1 rounded border ${isDarkMode ? 'bg-slate-900 border-slate-700 text-slate-300' : 'bg-gray-50 border-gray-200'}`
-                    }, STATUSES.map(st => h('option', { key: st.name, value: st.name }, st.name)))
-                  ))
-                )
-              );
-            })
-          ),
-
-          view === 'list' && h('div', { className: `border rounded-xl overflow-hidden shadow-sm ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}` },
-            h('table', { className: 'w-full text-left text-sm' },
-              h('thead', { className: `border-b ${isDarkMode ? 'bg-slate-900/50 border-slate-700 text-slate-400' : 'bg-gray-50 border-gray-200'}` },
-                h('tr', null,
-                  h('th', { className: 'p-3' }, 'Title'),
-                  h('th', { className: 'p-3' }, 'Status'),
-                  h('th', { className: 'p-3' }, 'Priority'),
-                  h('th', { className: 'p-3' }, 'Due Date'),
-                  h('th', { className: 'p-3 text-right' }, 'Actions')
-                )
-              ),
-              h('tbody', { className: 'divide-y divide-gray-700' },
-                filteredTasks.map(t => h('tr', { key: t.id },
-                  h('td', { className: 'p-3 font-medium' }, t.title),
-                  h('td', { className: 'p-3' }, t.status),
-                  h('td', { className: 'p-3 text-xs' }, t.priority),
-                  h('td', { className: 'p-3 text-xs text-gray-400' }, t.dueDate),
-                  h('td', { className: 'p-3 text-right' },
-                    h('button', { onClick: () => deleteTask(t.id), className: 'text-red-400 text-xs' }, 'Delete')
-                  )
-                ))
-              )
-            )
-          ),
-
-          view === 'gantt' && h('div', { className: `p-6 rounded-xl border flex flex-col gap-4 ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}` },
-            h('h2', { className: 'font-bold text-lg' }, 'Gantt Timeline Schedule'),
-            filteredTasks.map(t => h('div', { key: t.id, className: 'flex items-center gap-4 text-sm' },
-              h('span', { className: 'w-48 truncate font-medium' }, t.title),
-              h('div', { className: 'flex-1 bg-slate-700 h-8 rounded relative flex items-center px-3' },
-                h('div', { className: 'absolute left-0 top-0 bottom-0 bg-indigo-500/40 border-l-4 border-indigo-500 rounded', style: { width: `${Math.max(t.progress, 20)}%` } }),
-                h('span', { className: 'relative z-10 text-xs font-semibold' }, `${t.dueDate} (${t.progress}%)`)
-              )
-            ))
-          ),
-
-          view === 'calendar' && h('div', { className: `p-6 rounded-xl border grid grid-cols-7 gap-2 text-center text-xs font-semibold ${isDarkMode ? 'bg-slate-800 border-slate-700' : 'bg-white border-gray-200'}` },
-            ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => h('div', { key: d, className: 'py-2 text-gray-400' }, d)),
-            Array.from({ length: 31 }).map((_, i) => {
-              const dateStr = `2026-10-${(i + 1).toString().padStart(2, '0')}`;
-              const dayTasks = filteredTasks.filter(t => t.dueDate === dateStr);
-              return h('div', { key: i, className: `min-h-[70px] p-2 border rounded flex flex-col gap-1 items-start ${isDarkMode ? 'border-slate-700 bg-slate-900/40' : 'border-gray-100 bg-gray-50'}` },
-                h('span', { className: 'text-gray-400 font-bold' }, i + 1),
-                dayTasks.map(t => h('div', { key: t.id, className: 'w-full truncate text-[10px] bg-indigo-600 text-white rounded p-1 font-medium' }, t.title))
-              );
-            })
-          )
-        )
-      );
-    };
-
-    ReactDOM.createRoot(document.getElementById('root')).render(h(App));
+    render();
   </script>
 </body>
 </html>
